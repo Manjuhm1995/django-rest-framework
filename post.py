@@ -1,6 +1,6 @@
 import requests
 endpoint="http://127.0.0.1:8000/products/create/"
-get_response=requests.post(endpoint,data={"title":"sirigannadam balge","price":"200"})
+get_response=requests.post(endpoint,data={"title":"Kasturi Kannada namma kannada","price":"100"})
 print(get_response.json())
 
 

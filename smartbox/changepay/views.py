@@ -1,69 +1,54 @@
 from rest_framework import generics
-from rest_framework import status
+from rest_framework import mixins
+from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 
 from .models import Product
 from .serializer import ProductSerializer
 
-class ProductDetailAPIView(generics.RetrieveAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-
-class ProductListAPIView(generics.ListAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-
-class ProductCreateAPIView(generics.CreateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-
-    def perform_create(self, serializer):
-        content=serializer.validated_data.get("content")or None
-        if content is None:
-            content="this field shouldn't be empty"
-        serializer.save(content=content)
-
-class ProductListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-
-    def perform_create(self, serializer):
-        content=serializer.validated_data.get("content")or None
-        if content is None:
-            content="this field shouldn't be empty"
-        serializer.save(content=content)
-
-class ProductDestroyAPIView(generics.DestroyAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            instance=self.get_object()
-            instance.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Product.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-
-class ProductUpdateAPIView(generics.UpdateAPIView):
+class ProductDetailAPIView(mixins.RetrieveModelMixin,
+                           mixins.ListModelMixin,
+                           mixins.CreateModelMixin,
+                           mixins.UpdateModelMixin,
+                           mixins.DestroyModelMixin,
+                           generics.GenericAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     lookup_field = "pk"
-    # def perform_update(self, serializer):this is to update all field
-    # def partial_update(self, request, *args, **kwargs):
-    #     instance=self.get_object()
-    #     serializer=self.get_serializer(instance,data=request.data,Partial=True)
-    #     serializer.is_valid(raise_exception=True)
-    #     instance.content=serializer.validated_data.get("content")
-    #     instance.save()
-    #     return Response(serializer.data,status=status.HTTP_200_OK)
+    def get(self,request,*args,**kwargs):
+        pk=kwargs.get("pk")
+        print(pk)
+        if pk is not None:
+            return self.retrieve(request,*args,**kwargs)
+        return self.list(request,*args,**kwargs)
 
-    # def perform_update(self, serializer):
-    #     instance=self.get_object()
-    #     print(instance.id)
-    #     instance.content=serializer.validated_data.get("content")
-    #     instance.save()
-    #     serializer.save()
-    #     return Response(serializer.data,status=status.HTTP_200_OK)
+    def post(self,request,*args,**kwargs):
+        return self.create(request,*args,**kwargs)
+
+    def perform_create(self, serializer):
+        if serializer.is_valid(raise_exception=True):
+            modifying_price=serializer.validated_data.get("price")
+            price=1.1*float(modifying_price)
+            serializer.save(price=price)
+
+    def put(self,request,*args,**kwargs):
+        # instance=self.get_object()
+        # serializer=self.get_serializer(instance,data=request.data)
+        # if serializer.is_valid(raise_exception=True):
+        #     self.perform_update(serializer)
+        #     return Response(serializer.data)
+        return self.partial_update(request,*args,**kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request,*args,**kwargs)
+
+
+
+
+
+
+
+
+
+
+
